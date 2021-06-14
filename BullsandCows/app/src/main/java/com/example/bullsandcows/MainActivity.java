@@ -3,6 +3,7 @@ package com.example.bullsandcows;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -10,7 +11,10 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PaintDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.DragEvent;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -45,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     final int amountOfColors = 6;
     final int amountCorrect = 4;
     final int amountOfGuesses=15;
+    private int longClickDuration = 3000;
+    private boolean isLongPress = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -143,23 +149,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             });
                     alertDialog.show();
                 }
+                else {
+                    for(i=0; i<amountCorrect; i++)
+                        selectedColors[i]=-1;
+                }
             }
         });
 
         for (int i = 0; i < amountOfColors; i++) {
             LinearLayout lyr = new LinearLayout(this);
-            ImageButton btn = new ImageButton(this);
+            final ImageButton btn = new ImageButton(this);
 
             btn.setOnClickListener(this);
 
-            btn.setId((i + 1) * -1);
+            btn.setId(i);
             //btn.setText(String.valueOf((i+1)*-1));
             btn.setBackgroundResource(myImageList[i]);
             btn.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-
+            btn.setOnTouchListener(drag);
             btn.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             //btn.setLayoutParams(new ViewGroup.LayoutParams(300, 200));
             btn.setAdjustViewBounds(true);
+            btn.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    ClipData data = ClipData.newPlainText("id", String.valueOf(view.getId()));
+                    View.DragShadowBuilder shadow = new View.DragShadowBuilder(btn);
+                    view.startDrag(data, shadow, null, 0);
+                    return true;
+                }
+            });
             //colorsButtons.put(colors[i], btn);
             lyr.addView(btn);
             LinearLayout.LayoutParams par = new LinearLayout.LayoutParams(120, 217);
@@ -186,11 +205,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 LinearLayout lyr = new LinearLayout(this);
                 //btn.setLayoutParams(params);
                 btn.setOnClickListener(this);
-                btn.setId(j + 1 + (i * 4));
+                btn.setId(j + 1 + (i * 4)+amountOfColors);
                 //btn.setText(String.valueOf(j + 1 + (i * 4)));
                 btn.setBackgroundResource(hole_unfilled);
                 btn.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                btn.setOnDragListener(new View.OnDragListener() {
+                    @Override
+                    public boolean onDrag(View view, DragEvent dragEvent) {
+                        final int action = dragEvent.getAction();
+                        switch (action){
+                            case DragEvent.ACTION_DRAG_STARTED:
+                                break;
+                            case DragEvent.ACTION_DRAG_EXITED:
+                                break;
+                            case DragEvent.ACTION_DRAG_ENTERED:
+                                break;
 
+                            case DragEvent.ACTION_DROP: {
+
+                            }
+
+                            case DragEvent.ACTION_DRAG_ENDED: {
+                                try {
+
+
+                                    ClipData.Item item = dragEvent.getClipData().getItemAt(0); // the button that was dragged
+                                    int color = Integer.parseInt(item.getText().toString());
+                                    int col =(view.getId()-amountOfColors-1)%amountCorrect;
+                                    ImageButton dragged = findViewById(color);
+                                    if(selectedColors[col]!=-1) { // if it already contained color
+                                        int colorAlready=selectedColors[col];
+                                        ImageButton restore = findViewById(colorAlready);
+                                        restore.setBackgroundResource(myImageList[colorAlready]);
+                                        restore.setEnabled(true);
+                                    }
+                                    dragged.setEnabled(false);
+                                    dragged.setBackgroundResource(selected_colors_img[color]);
+                                    view.setBackgroundResource(myImageList[color]);
+                                    selectedColors[col] = color;
+                                }
+                                catch (Exception e) {
+                                    break;
+                                }
+                            }
+                            default:
+                                break;
+                        }
+                        return  true;
+                    }
+                });
                 btn.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 //btn.setLayoutParams(new ViewGroup.LayoutParams(300, 200));
                 btn.setAdjustViewBounds(true);
@@ -247,7 +310,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return "Pink";
 
     }
+    public View.OnTouchListener drag = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                isLongPress = true;
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isLongPress) {
 
+                        }
+                    }
+                }, longClickDuration);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                isLongPress = false;
+            }
+            return true;
+        }
+    };
     public void onClick(View V) {
         int id = V.getId();
         int row, col;
