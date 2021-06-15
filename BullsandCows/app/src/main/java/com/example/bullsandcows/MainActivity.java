@@ -53,9 +53,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean isLongPress = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //==========================================================================================
+        //INITIALISE
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         LinearLayout container = (LinearLayout) findViewById(R.id.MainBoard);
         LinearLayout sol_cont = (LinearLayout) findViewById(R.id.Solution);
         Button endTurn = (Button) findViewById(R.id.endTurn);
@@ -66,12 +67,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         selectedColors = new int[amountCorrect];
         for (int i = 0; i < selectedColors.length; i++)
             selectedColors[i] = -1;
-
         int hole_unfilled = R.drawable.hole_unfilled3;
         solution = new LinearLayout(this);
         solution.setOrientation(LinearLayout.HORIZONTAL);
-        //board_game = new Button[10][4];
-
+        //==========================================================================================
+        //Create the code for user
         Random randomGenerator = new Random();
         while (decode.size() < amountCorrect) {
 
@@ -80,6 +80,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 decode.add(random);
             }
         }
+        //==========================================================================================
+        // Click listener for the reveal button
         reveal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -88,7 +90,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.LENGTH_LONG).show();
             }
         });
-
+        //==========================================================================================
+        // Click listener for the end turn button
         endTurn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 for (int i = 0; i < 4; i++) {
@@ -130,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     pins_buttons[i].setEnabled(true);
                     pins_buttons[i].setBackgroundResource(myImageList[i]);
                     if (i < amountCorrect) {
-                        ImageButton btn = findViewById(i + 1 + (turn * 4));
+                        ImageButton btn = findViewById(i + 1 + (turn * 4)+amountOfColors);
                         btn.setEnabled(false);
                         selectedColors[i] = -1;
                     }
@@ -155,24 +158,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
-
+        //==========================================================================================
+        // Create the player pins for him to drag
         for (int i = 0; i < amountOfColors; i++) {
             LinearLayout lyr = new LinearLayout(this);
             final ImageButton btn = new ImageButton(this);
-
-            btn.setOnClickListener(this);
-
             btn.setId(i);
-            //btn.setText(String.valueOf((i+1)*-1));
             btn.setBackgroundResource(myImageList[i]);
             btn.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            btn.setOnTouchListener(drag);
             btn.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            //btn.setLayoutParams(new ViewGroup.LayoutParams(300, 200));
             btn.setAdjustViewBounds(true);
             btn.setOnTouchListener(new View.OnTouchListener() {
                 @Override
-                public boolean onTouch(View view, MotionEvent motionEvent) {
+                public boolean onTouch(View view, MotionEvent motionEvent) { // event listener for dragging
                     ClipData data = ClipData.newPlainText("id", String.valueOf(view.getId()));
                     View.DragShadowBuilder shadow = new View.DragShadowBuilder(btn);
                     view.startDrag(data, shadow, null, 0);
@@ -191,7 +189,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 LinearLayout.LayoutParams.WRAP_CONTENT));
         solution.setGravity(Gravity.CENTER);
         sol_cont.addView(solution);
-
+        //==========================================================================================
+        // Create the game board and the bool pgia holes
         for (int i = 0; i < childLayout.length; i++) {
 
             childLayout[i] = new LinearLayout(this);
@@ -264,7 +263,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 lyr.setLayoutParams(par);
                 childLayout[i].addView(lyr);
             }
-
+            
             LinearLayout bool_pgia = new LinearLayout(this);
             bool_pgia.setOrientation(LinearLayout.VERTICAL);
             int counter = 0;
@@ -291,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         }
-
+        //==========================================================================================
 
     }
 
@@ -310,30 +309,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return "Pink";
 
     }
-    public View.OnTouchListener drag = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                isLongPress = true;
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isLongPress) {
 
-                        }
-                    }
-                }, longClickDuration);
-            } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                isLongPress = false;
-            }
-            return true;
-        }
-    };
     public void onClick(View V) {
         int id = V.getId();
-        int row, col;
-        col = (id - 1) % amountCorrect;
+        int col = (id - amountOfColors-1) % amountCorrect;
+        if(selectedColors[col]!=-1)
+        {
+            int colorAlready=selectedColors[col];
+            ImageButton restore = findViewById(colorAlready);
+            restore.setBackgroundResource(myImageList[colorAlready]);
+            restore.setEnabled(true);
+            V.setBackgroundResource(R.drawable.hole_unfilled3);
+            selectedColors[col]=-1;
+        }
+        /*
         if (id < 0) {
             row = -1;
             col = ((id + 1) % amountOfColors) * -1;
@@ -375,5 +364,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         }
+
+         */
     }
 }
